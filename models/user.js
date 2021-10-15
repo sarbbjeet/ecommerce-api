@@ -22,7 +22,7 @@ userSchema.methods.generateToken = async function() {
     const payload = {
         _id: this._id,
         email: this.email,
-        isadmin: this.isAdmin,
+        isAdmin: this.isAdmin,
         isVerified: this.isVerified,
     };
     return await jwt.sign(payload, jwtKey);

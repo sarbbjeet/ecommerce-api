@@ -6,14 +6,14 @@ const route = express.Router();
 const { Product, productValidate } = require("../models/product");
 
 //get all products from database
-route.get("/", [authentication, authorization], async(req, res) => {
+route.get("/", async(req, res) => {
     const products = await Product.find();
     if (!products.length)
         return res.status(400).json({ msg: "products list is empty" });
     return res.json(products);
 });
 //add new product
-route.post("/", async(req, res) => {
+route.post("/", authentication, async(req, res) => {
     const { error } = productValidate(req.body);
     if (error) return res.status(400).json({ msg: error.details[0].message });
     const product = await new Product(req.body);
@@ -22,7 +22,7 @@ route.post("/", async(req, res) => {
 });
 
 //delete product
-route.delete("/:id", async(req, res) => {
+route.delete("/:id", [authentication, authorization], async(req, res) => {
     const { id } = req.params;
     if (!mongoose.Types.ObjectId.isValid(id))
         return res.status(400).json({ msg: "invaild product id" });
@@ -32,7 +32,7 @@ route.delete("/:id", async(req, res) => {
 });
 
 //update product details
-route.put("/:id", async(req, res) => {
+route.put("/:id", authentication, async(req, res) => {
     const { id } = req.params;
     if (!mongoose.Types.ObjectId.isValid(id))
         return res.status(400).json({ msg: "invaild product id" });
@@ -53,7 +53,7 @@ route.put("/:id", async(req, res) => {
 });
 
 //update product details
-route.patch("/:id", async(req, res) => {
+route.patch("/:id", authentication, async(req, res) => {
     const { id } = req.params;
     if (!mongoose.Types.ObjectId.isValid(id))
         return res.status(400).json({ msg: "invaild product id" });
