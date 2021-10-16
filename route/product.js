@@ -4,6 +4,7 @@ const authentication = require("../middleware/authentication");
 const authorization = require("../middleware/authorization");
 const route = express.Router();
 const { Product, productValidate } = require("../models/product");
+const { cloudUploader } = require("../startup/cloudinary");
 
 //get all products from database
 route.get("/", async(req, res) => {
@@ -62,6 +63,14 @@ route.patch("/:id", authentication, async(req, res) => {
     });
     if (!product) return res.status(400).json({ msg: "product id not found" });
     res.json({ msg: await Product.findById(id) }); //updated partically product details
+});
+
+route.post("/upload", async(req, res) => {
+    const { image } = req.body;
+    cloudUploader(image, ({ error, data }) => {
+        if (error) return res.status(400).json(error);
+        return res.json(data);
+    });
 });
 
 module.exports = route;
