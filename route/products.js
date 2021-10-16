@@ -4,22 +4,27 @@ const authentication = require("../middleware/authentication");
 const authorization = require("../middleware/authorization");
 const route = express.Router();
 const { Product, productValidate } = require("../models/product");
-const { cloudUploader } = require("../startup/cloudinary");
+const cloudinary = require("cloudinary").v2;
 
 //get all products from database
 route.get("/", async(req, res) => {
-    const products = await Product.find();
+    const products = await Product.find().populate("images");
     if (!products.length)
         return res.status(400).json({ msg: "products list is empty" });
     return res.json(products);
 });
+
 //add new product
 route.post("/", authentication, async(req, res) => {
     const { error } = productValidate(req.body);
     if (error) return res.status(400).json({ msg: error.details[0].message });
     const product = await new Product(req.body);
+    const result = await cloudinary.uploader.upload(product.icon, {
+        folder: "website1",
+    });
+    product.icon = result.url;
     await product.save();
-    return res.json({ msg: "new product is added to database" });
+    res.json(product);
 });
 
 //delete product
@@ -45,12 +50,17 @@ route.put("/:id", authentication, async(req, res) => {
     product.title = req.body.title;
     product.desc = req.body.desc;
     product.category = req.body.category;
-    product.image = req.body.image;
+    product.images = req.body.images;
     product.price = req.body.price;
     product.color = req.body.color;
     product.size = req.body.size;
+    //product icon update code
+    const result = await cloudinary.uploader.upload(product.icon, {
+        folder: "website1", //cloudinary folder name
+    });
+    product.icon = result.url;
     await product.save();
-    res.json({ msg: product }); //updated product data
+    res.json(product); //updated product data
 });
 
 //update product details
@@ -62,15 +72,7 @@ route.patch("/:id", authentication, async(req, res) => {
         runValidators: true,
     });
     if (!product) return res.status(400).json({ msg: "product id not found" });
-    res.json({ msg: await Product.findById(id) }); //updated partically product details
-});
-
-route.post("/upload", async(req, res) => {
-    const { image } = req.body;
-    cloudUploader(image, ({ error, data }) => {
-        if (error) return res.status(400).json(error);
-        return res.json(data);
-    });
+    res.json(await Product.findById(id)); //updated partically product details
 });
 
 module.exports = route;

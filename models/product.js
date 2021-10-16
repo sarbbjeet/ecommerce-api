@@ -1,12 +1,17 @@
 const mongoose = require("mongoose");
 const Joi = require("joi");
+const joiObjectId = require("joi-objectid")(Joi);
 
 const productSchema = new mongoose.Schema({
     title: { type: String, required: true },
     desc: { type: String, required: true },
     price: { type: Number, required: true },
     category: { type: String, required: true },
-    image: { type: Array, required: true },
+    icon: { type: String, required: true },
+    images: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "productImages",
+    },
     color: { type: String },
     size: { type: String },
 }, { timestamps: true });
@@ -18,7 +23,8 @@ const productValidate = (product) => {
         title: Joi.string().required(),
         desc: Joi.string().required(),
         price: Joi.number().required(),
-        image: Joi.array().required(),
+        icon: Joi.string().required(),
+        images: joiObjectId(),
         category: Joi.string().required(),
         color: Joi.string(),
         size: Joi.string(),

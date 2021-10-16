@@ -9,6 +9,17 @@ if (process.env.NODE_ENV !== "production")
 require("./startup/db")(); //mongodb connection
 const winston = require("winston");
 const express = require("express");
+const cloudinary = require("cloudinary").v2;
+
+// cloudinary configuration
+//get config data from environment variables
+const config = {
+    cloud_name: process.env.CLOUD_NAME,
+    api_key: process.env.API_KEY,
+    api_secret: process.env.API_SECRET,
+};
+cloudinary.config(config);
+/////////////////////////////////////////////////
 const app = express();
 app.use(express.json()); //activate json data
 require("./startup/routes")(app); //manage all routes
