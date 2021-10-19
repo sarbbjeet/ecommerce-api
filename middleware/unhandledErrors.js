@@ -1,4 +1,7 @@
 module.exports = (err, req, res, next) => {
-    if (err) return res.status(500).json({ msg: "500 server error" });
+    if (err)
+        return res
+            .status(500)
+            .json(Object.keys(err).length ? err : { msg: "Internal server error" });
     next();
 };

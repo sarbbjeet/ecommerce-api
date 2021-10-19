@@ -1,10 +1,10 @@
 const express = require("express");
 const route = express.Router();
 const cloudinary = require("cloudinary").v2;
+const _ = require("lodash");
 const {
     productImagesValidate,
     ProductImages,
-    uploadImagesValidate,
 } = require("../models/productImages");
 
 //upload images to cloudinary
@@ -18,7 +18,10 @@ const uploadImages = async(images) => {
             const result = await cloudinary.uploader.upload(image, {
                 folder: "website1",
             });
-            output.images.push({ image: result.url });
+            output.images.push({
+                ..._.pick(result, ["secure_url", "public_id"]),
+                id: Date.now().toString(),
+            });
         } catch ({ error }) {
             output.errors.push(error);
         }
@@ -26,39 +29,77 @@ const uploadImages = async(images) => {
     return output;
 };
 
-//get product images
-route.get("/products", async(req, res) => {
-    const productImages = await ProductImages.find();
-    res.json(productImages);
-});
+//create images array
+route.post("/product-images", async(req, res) => {
+    let errorsBucket;
 
-route.post("/products", async(req, res) => {
     const { error } = productImagesValidate(req.body);
     if (error) return res.status(400).json({ msg: error.details[0].message });
+    if (req.body.images) {
+        const { errors, images } = await uploadImages(req.body.images);
+        req.body.images = images;
+        errorsBucket = errors;
+    }
     let productImages = await ProductImages(req.body);
-    //update image data with cloudinary image address
-    const { errors, images } = await uploadImages(req.body.images);
-    productImages.images = images;
     await productImages.save();
-    res.json({ productImages, errors });
+    res.json({ productImages, errorsBucket });
 });
 
-//upload new images of any product
-//'id' means productImages array's single item
-route.post("/products/:id", async(req, res) => {
+//add new image to images array
+//id => images array id
+route.get("/product-images/:id", async(req, res) => {
     const { id } = req.params;
-    //validate images array
-    const { error } = uploadImagesValidate(req.body);
-    if (error) return res.status(400).json({ msg: error.details[0].message });
-
     const singleProductImages = await ProductImages.findById(id);
     if (!singleProductImages)
         return res.status(400).json({ msg: "wrong product Images id" });
-
-    //update image data with cloudinary image address
-    const { errors, images } = await uploadImages(req.body.images);
-    singleProductImages.images = [...singleProductImages.images, ...images];
-    await singleProductImages.save();
-    res.json({ singleProductImages, errors });
+    const productImages = await ProductImages.findById(id);
+    res.json(productImages);
 });
+
+//upload new images of selected product object
+//'id' means productImages array's single object
+route.post("/product-images/:id", async(req, res) => {
+    const { id } = req.params;
+    let errorsBucket;
+    //validate images array
+    const { error } = productImagesValidate(req.body);
+    if (error) return res.status(400).json({ msg: error.details[0].message });
+    const singleProductImages = await ProductImages.findById(id);
+    if (!singleProductImages)
+        return res.status(400).json({ msg: "wrong product Images id" });
+    if (req.body.images) {
+        const { errors, images } = await uploadImages(req.body.images);
+        errorsBucket = errors;
+        singleProductImages.images = [...singleProductImages.images, ...images];
+    }
+    await singleProductImages.save();
+    res.json({ singleProductImages, errorsBucket });
+});
+
+//delete all images of selected product object
+//'id' means productImages array's single object
+route.delete("/product-images/:id", async(req, res) => {
+    const { id } = req.params;
+    const singleProductImages = await ProductImages.findByIdAndRemove(id);
+    if (!singleProductImages)
+        return res.status(400).json({ msg: "wrong products-Images array id" });
+    res.json({
+        msg: "successfully removed all images of selected product images array",
+    });
+});
+
+//delete single image from product-images
+route.delete("/product-images/:id/:imageId", async(req, res) => {
+    const { id, imageId } = req.params;
+    const singleProductImages = await ProductImages.findById(id);
+    if (!singleProductImages)
+        return res.status(400).json({ msg: "wrong products-Images array id" });
+    await cloudinary.uploader.destroy(imageId);
+    singleProductImages.images = singleProductImages.images.filter(
+        (img) => img.id !== imageId
+    );
+    await singleProductImages.save();
+    res.json({ singleProductImages });
+});
+
 module.exports = route;

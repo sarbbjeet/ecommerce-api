@@ -7,7 +7,7 @@ const productSchema = new mongoose.Schema({
     desc: { type: String, required: true },
     price: { type: Number, required: true },
     category: { type: String, required: true },
-    icon: { type: String, required: true },
+    icon: { type: Object },
     images: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "productImages",
@@ -23,7 +23,7 @@ const productValidate = (product) => {
         title: Joi.string().required(),
         desc: Joi.string().required(),
         price: Joi.number().required(),
-        icon: Joi.string().required(),
+        icon: Joi.string(), //user can also send icon in the form of string url addr
         images: joiObjectId(),
         category: Joi.string().required(),
         color: Joi.string(),
