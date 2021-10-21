@@ -7,6 +7,18 @@ const {
     ProductImages,
 } = require("../models/productImages");
 
+//upload images library
+const multer = require("multer");
+const storage = multer.diskStorage({
+    destination: function(req, file, cb) {
+        cb(null, "./uploads");
+    },
+    filename: function(req, file, cb) {
+        cb(null, new Date().toISOString() + file.originalname);
+    },
+});
+const upload = multer({ storage });
+
 //upload images to cloudinary
 const uploadImages = async(images) => {
     const output = {
@@ -100,6 +112,17 @@ route.delete("/product-images/:id/:imageId", async(req, res) => {
     );
     await singleProductImages.save();
     res.json({ singleProductImages });
+});
+
+//upload icon of product
+//upload image ///
+route.post("/product-icon", upload.array("arr1"), async(req, res) => {
+    try {
+        console.log(req);
+        res.send("success");
+    } catch (ex) {
+        res.status(400).json({ ex });
+    }
 });
 
 module.exports = route;
