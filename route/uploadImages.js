@@ -7,6 +7,7 @@ const {
     ProductImages,
 } = require("../models/productImages");
 const { upload } = require("../middleware/diskMulter"); //upload file to disk
+const { multerUploads } = require("../middleware/cloudinaryMulter");
 
 //upload images to cloudinary
 const uploadImages = async(images) => {
@@ -105,13 +106,12 @@ route.delete("/product-images/:id/:imageId", async(req, res) => {
 
 //upload icon of product
 //upload image ///
-route.post("/product-icon", upload.single("productIcon"), async(req, res) => {
-    try {
-        console.log(req.file);
-        res.send("success");
-    } catch (ex) {
-        res.status(400).json({ ex });
+route.post(
+    "/product-icon",
+    multerUploads.single("productIcon"),
+    async(req, res) => {
+        res.json(req.file); //it will return cloudinary path and name
     }
-});
+);
 
 module.exports = route;
