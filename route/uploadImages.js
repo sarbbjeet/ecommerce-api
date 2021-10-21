@@ -29,7 +29,7 @@ const uploadImages = async(images) => {
     return output;
 };
 
-//create images array
+//create images array for a product
 route.post("/product-images", async(req, res) => {
     let errorsBucket;
 

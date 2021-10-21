@@ -16,8 +16,9 @@ route.get("/", async(req, res) => {
 });
 
 //add new product
-route.post("/", authentication, async(req, res) => {
+route.post("/", async(req, res) => {
     const { icon } = req.body;
+    // console.log("icon..", icon);
     const { error } = productValidate(req.body);
     if (error) return res.status(400).json({ msg: error.details[0].message });
     const product = await new Product(
@@ -38,7 +39,7 @@ route.post("/", authentication, async(req, res) => {
         });
         product.icon = _.pick(result, ["secure_url", "public_id"]);
     }
-    await product.save();
+    // await product.save();
     res.json(product);
 });
 
