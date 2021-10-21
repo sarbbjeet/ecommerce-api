@@ -107,7 +107,7 @@ route.delete("/product-images/:id/:imageId", async(req, res) => {
 //upload image ///
 route.post("/product-icon", upload.single("productIcon"), async(req, res) => {
     try {
-        console.log(req);
+        console.log(req.file);
         res.send("success");
     } catch (ex) {
         res.status(400).json({ ex });
